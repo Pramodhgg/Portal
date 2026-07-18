@@ -1,0 +1,12 @@
+
+services:
+  dbservice:
+    image: mysql:latest
+    container_name: jobportaldb
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DATABASE_PASSWORD}
+      MYSQL_DATABASE: jobportal
+    volumes:
+      - D:/Projects/SpringBoot/portal/Jobportal-data:/var/lib/mysql

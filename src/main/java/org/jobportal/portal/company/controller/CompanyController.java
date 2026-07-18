@@ -1,0 +1,28 @@
+package org.jobportal.portal.company.controller;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.jobportal.portal.aspects.LogAspect;
+import org.jobportal.portal.dto.CompanyDto;
+import org.jobportal.portal.company.service.ICompanyService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/companies")
+@RequiredArgsConstructor
+@Slf4j
+public class CompanyController {
+
+    private final ICompanyService companyService;
+    @LogAspect
+    @GetMapping(path = "public", version = "1.0")
+    public ResponseEntity<List<CompanyDto>> getAllCompanies() {
+       List<CompanyDto> companyList = companyService.getAllCompanies();
+        return ResponseEntity.ok().body(companyList);
+    }
+}
