@@ -19,16 +19,22 @@ A Spring Boot REST API for a job portal platform, supporting company listings, j
 
 ```
 src/main/java/org/jobportal/portal/
-├── auth/                 # Login/registration controller
-├── company/               # Company controller & service
-├── contact/                # Contact form controller & service
-├── security/              # Spring Security config, JWT filter, auth provider
-├── audit/                 # JPA auditing (created_by / updated_by resolution)
-├── entity/                 # JPA entities (JobPortalUser, Company, Job, Role, Contact)
-├── repository/             # Spring Data JPA repositories
-├── dto/                    # Request/response DTOs
-├── constants/               # Shared application constants
-└── config/                  # Web/MVC configuration
+├── auth/                      # Login/registration controller
+├── company/                    # Company controller & service layer
+├── contact/                    # Contact form controller & service layer
+├── job/                        # Job management controller & service layer
+├── user/                       # User management controller & service layer
+├── security/                   # Spring Security config, JWT filter, auth provider, CORS
+├── audit/                      # JPA auditing (created_by / updated_by resolution)
+├── entity/                     # JPA entities (User, Company, Job, Role, Contact, Profile, JobApplication)
+├── repository/                 # Spring Data JPA repositories with custom queries
+├── dto/                        # Request/response DTOs (input/output mapping)
+├── constants/                  # Shared application constants
+├── util/                       # Helper utilities (transformation, logging)
+├── cache/                      # Caching configuration (Caffeine)
+├── exception/                  # Global exception handling
+├── aspects/                    # AOP aspects (logging, auditing, validation)
+└── config/                     # Web/MVC configuration
 ```
 
 ## Prerequisites
@@ -117,14 +123,63 @@ All configuration lives in [`application.properties`](./src/main/resources/appli
 
 ## API Overview
 
-| Method | Endpoint                     | Auth      | Description                          |
-|--------|-------------------------------|-----------|---------------------------------------|
-| POST   | `/api/auth/register/public`   | Public    | Register a new job-seeker account     |
-| POST   | `/api/auth/login/public`      | Public    | Authenticate and receive a JWT        |
-| GET    | `/api/companies/public`       | Public    | List all companies with their jobs    |
-| POST   | `/api/contacts/public`        | Public    | Submit a contact form message         |
+### Public Endpoints (No Auth Required)
 
-All endpoints are versioned via the `version` request parameter/header (Spring's built-in API versioning); see Swagger UI for the full contract.
+| Method | Endpoint                        | Description                                    |
+|--------|---------------------------------|------------------------------------------------|
+| POST   | `/api/auth/register/public`     | Register a new job-seeker account              |
+| POST   | `/api/auth/login/public`        | Authenticate and receive JWT token (24h expiry)|
+| GET    | `/api/companies/public`         | List all companies with their job postings     |
+| POST   | `/api/contacts/public`          | Submit a contact/inquiry form                  |
+
+### Secured Endpoints (JWT Required)
+
+| Method | Endpoint                         | Description                          |
+|--------|----------------------------------|--------------------------------------|
+| GET    | `/api/users/{userId}`            | Get user profile                     |
+| PUT    | `/api/users/{userId}`            | Update user profile                  |
+| GET    | `/api/jobs`                      | List jobs (with filtering)           |
+| POST   | `/api/jobs`                      | Create new job posting               |
+| PUT    | `/api/jobs/{jobId}`              | Update job posting                   |
+| POST   | `/api/jobs/{jobId}/apply`        | Apply for a job                      |
+| GET    | `/api/profiles`                  | Get user profile details             |
+| POST   | `/api/profiles`                  | Create/update user profile           |
+
+All endpoints support **API versioning** via `version` query parameter or `Accept` header (e.g., `version=1.0`). See Swagger UI for full OpenAPI spec and request/response schemas.
+
+## Dependency Injection & Lombok
+
+This project uses **constructor injection** with Lombok's `@RequiredArgsConstructor` — no `@Autowired` field injection. Benefits:
+
+- ✅ Immutable dependencies (`final` fields)
+- ✅ Easy to test (pass mocks to constructor)
+- ✅ Clear dependency declaration in method signature
+- ✅ Zero boilerplate (Lombok generates constructors)
+
+Example:
+```java
+@Service
+@RequiredArgsConstructor
+public class CompanyServiceImpl implements ICompanyService {
+    private final CompanyRepository companyRepository;  // Injected automatically
+    
+    @Override
+    public List<CompanyDto> getAllCompanies() {
+        return companyRepository.findAll().stream()
+                .map(ApplicationUtility::transformCompanyToDto)
+                .toList();
+    }
+}
+```
+
+## Data Transformation (DTO ↔ Entity)
+
+Always use explicit helper methods in `ApplicationUtility` for complex transformations:
+
+- **Entity → DTO** (response): Use `ApplicationUtility.transformXxxToDto()` — manually GET from entity, populate DTO
+- **DTO → Entity** (request): Use `ApplicationUtility.transformDtoToXxx()` — manually SET into entity, handle nested objects
+
+**Never use `BeanUtils.copyProperties` for nested objects** — it silently loses data.
 
 ## Building
 
@@ -142,6 +197,24 @@ java -jar target/portal-0.0.1-SNAPSHOT.jar
 
 ```bash
 ./mvnw test
+```
+
+## Environment Profiles
+
+The application supports multiple deployment profiles via `spring.profiles.active`:
+
+- **`dev`** (default): Local development with debug logging
+- **`qa`**: Quality assurance environment (see `application-qa.properties`)
+- **`prod`**: Production deployment (see `application-prod.properties`, requires secure env vars)
+
+Set via environment variable:
+```bash
+export SPRING_PROFILES_ACTIVE=prod
+```
+
+Or in `application.properties`:
+```properties
+spring.profiles.active=prod
 ```
 
 ## License

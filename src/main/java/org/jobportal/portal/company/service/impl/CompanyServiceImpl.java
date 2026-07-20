@@ -10,6 +10,7 @@ import org.jobportal.portal.entity.Company;
 import org.jobportal.portal.entity.Job;
 import org.jobportal.portal.repository.CompanyRepository;
 import org.jobportal.portal.company.service.ICompanyService;
+import org.jobportal.portal.util.ApplicationUtility;
 import org.springframework.beans.BeanUtils;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,7 @@ public class CompanyServiceImpl implements ICompanyService {
 
 
     private CompanyDto trasnformCompanyTodo(Company company) {
-        List<JobDto> jobDtos = company.getJobs().stream().map(this::transformJobToDto).collect(Collectors.toList());
+        List<JobDto> jobDtos = company.getJobs().stream().map(ApplicationUtility::transformJobToDto).collect(Collectors.toList());
         return new CompanyDto(company.getId(), company.getName(),company.getLogo(), company.getDescription(),
                 company.getIndustry(), company.getRating(), company.getSize(), company.getFounded(), company.getLocations(),
                 company.getEmployees(), company.getWebsite(), company.getCreatedAt(), jobDtos);

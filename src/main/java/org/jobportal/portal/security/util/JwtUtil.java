@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.jobportal.portal.constants.ApplicationConstants;
 import org.jobportal.portal.entity.JobPortalUser;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 @Configuration
 @RequiredArgsConstructor
+@PropertySource(value="classpath:jwt.properties")
 public class JwtUtil {
     public final Environment env;
 
