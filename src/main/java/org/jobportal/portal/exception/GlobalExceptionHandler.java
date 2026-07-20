@@ -1,6 +1,7 @@
 package org.jobportal.portal.exception;
 
 import org.jobportal.portal.dto.ErrorResponseDto;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -70,6 +71,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ex.getErrors());
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponseDto> handleOptimisticLockingFailure(
+            OptimisticLockingFailureException ex, WebRequest webRequest) {
+        ErrorResponseDto errorResponseDto = new ErrorResponseDto(
+                webRequest.getDescription(false),
+                HttpStatus.CONFLICT,
+                "Resource was updated by another user. Please refresh and try again.",
+                LocalDateTime.now());
+        return new ResponseEntity<>(errorResponseDto, HttpStatus.CONFLICT);
     }
 
 }

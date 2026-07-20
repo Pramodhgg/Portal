@@ -37,6 +37,10 @@ public class Company extends BaseEntity{
     @Column(name = "ID",nullable = false)
     private Long id;
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     @Column(name = "NAME",nullable = false,unique = true)
     private String name;
 
