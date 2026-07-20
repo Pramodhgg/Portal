@@ -27,6 +27,10 @@ public class Profile extends BaseEntity {
     @Column(name = "id", nullable = false)
     private Long id;
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     @NotNull
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)

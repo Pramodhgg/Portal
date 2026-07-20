@@ -24,6 +24,10 @@ public class Job extends BaseEntity {
     @Column(name = "id", nullable = false)
     private Long id;
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     @Size(max = 255)
     @NotNull
     @Column(name = "title", nullable = false)
