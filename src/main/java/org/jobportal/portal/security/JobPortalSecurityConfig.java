@@ -1,5 +1,6 @@
 package org.jobportal.portal.security;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.jobportal.portal.security.filter.JwtTokenVaidatorFilter;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -40,11 +41,11 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @RequiredArgsConstructor
 public class JobPortalSecurityConfig {
 
-    @Qualifier("publicPaths")
     private final List<String> publicPaths;
 
-    @Qualifier("securedPaths")
     private final List<String> securedPaths;
+
+    private final List<String> adminPaths;
 
     @Bean
     SecurityFilterChain customSecurityFilterChain(HttpSecurity http) {
@@ -53,12 +54,25 @@ public class JobPortalSecurityConfig {
                .cors(corsConfig -> corsConfig.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests((requests) ->{
                     publicPaths.forEach(path -> requests.requestMatchers(path).permitAll());
+                    adminPaths.forEach(path -> requests.requestMatchers(path).hasRole("ADMIN"));
                     securedPaths.forEach(path -> requests.requestMatchers(path).authenticated());
                     requests.anyRequest().denyAll();
                 })
                 .addFilterBefore(new JwtTokenVaidatorFilter(publicPaths), BasicAuthenticationFilter.class)
                 .formLogin(flc->flc.disable())
-                .httpBasic(withDefaults())
+                .httpBasic(hbc->hbc.disable())
+                .exceptionHandling(exception -> exception
+                       .accessDeniedHandler((request, response, accessDeniedException) -> {
+                           response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                           response.setContentType("application/json");
+                           response.getWriter().write("{\"error\": \"Access Denied\", \"message\": \"You don't have permission to access this resource\"}");
+                       })
+//                        .authenticationEntryPoint((request, response, authException) -> {
+//                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+//                            response.setContentType("application/json");
+//                            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Authentication required\"}");
+//                        })
+                )
                 .build();
     }
     @Bean
