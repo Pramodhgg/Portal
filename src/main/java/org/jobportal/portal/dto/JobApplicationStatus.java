@@ -1,4 +1,4 @@
-package com.eazybytes.jobportal.dto;
+package org.jobportal.portal.dto;
 
 public enum JobApplicationStatus {
     PENDING,
