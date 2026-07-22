@@ -1,9 +1,13 @@
 package org.jobportal.portal.job.service.impl;
 
+import org.jobportal.portal.dto.JobApplicationDto;
 import org.jobportal.portal.dto.JobDto;
+import org.jobportal.portal.dto.UpdateJobApplicationDto;
 import org.jobportal.portal.entity.Job;
+import org.jobportal.portal.entity.JobApplication;
 import org.jobportal.portal.entity.JobPortalUser;
 import org.jobportal.portal.job.service.IJobService;
+import org.jobportal.portal.repository.JobApplicationRepository;
 import org.jobportal.portal.repository.JobPortalUserRepository;
 import org.jobportal.portal.repository.JobRepository;
 import org.jobportal.portal.util.ApplicationUtility;
@@ -23,6 +27,7 @@ public class JobServiceImpl implements IJobService {
 
     private final JobRepository jobRepository;
     private final JobPortalUserRepository userRepository;
+    private final JobApplicationRepository jobApplicationRepository;
 
     @Override
     public List<JobDto> getEmployerJobs(String employerEmail) {
@@ -81,4 +86,22 @@ public class JobServiceImpl implements IJobService {
         BeanUtils.copyProperties(jobDto, job);
         return job;
     }
+
+
+    @Override
+    public List<JobApplicationDto> getApplicationsByJobForEmployer(Long jobId) {
+        List<JobApplication> applications = jobApplicationRepository.findByJobIdOrderByAppliedAtAsc(jobId);
+        return applications.stream()
+                .map(jobApplication -> ApplicationUtility.mapToJobApplicationDto(jobApplication))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    @Override
+    public boolean updateJobApplication(UpdateJobApplicationDto dto) {
+        int updatedRows = jobApplicationRepository.updateStatusAndNotesById(
+                dto.status().name(), dto.notes(),dto.applicationId(), ApplicationUtility.getLoggedInUser());
+        return updatedRows > 0;
+    }
+
 }
